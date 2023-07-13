@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Profile</title>
+</head>
+
+<body>
+    
+
+
+   
+        <body>
+            <button id="btn">Voice input</button>
+            
+            <div id="txt"></div>
+        </body>
+
+        <script>
+
+            "use strict";
+            
+            onload =()=> {
+            
+                let TotalTranscript = "";
+            
+                let speechIsStopped = true;
+            
+                window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+                const recognition = new SpeechRecognition();
+                recognition.interimResults = true;
+                recognition.continuous = true;
+            
+                recognition.addEventListener('result', e => {
+                    const transcript = Array.from(e.results)
+                        .map(result => result[0])
+                        .map(result => result.transcript)
+                        .join('')
+                    //txt is a div tag
+                    txt.textContent = transcript;
+                    //console.log(transcript);
+                });
+                //btn is a button tag;
+                btn.addEventListener('click', function () {
+                    if (speechIsStopped) {
+                        try{recognition.abort();} catch(err){}
+                        recognition.start();
+                        speechIsStopped = false;
+                        btn.textContent = "Stop";
+                    }
+                    else {
+                        speechIsStopped = true;
+                        recognition.stop();
+                        TotalTranscript += txt.textContent;
+                        console.log(TotalTranscript);
+                        //DoStuff(TotalTranscript);
+                        TotalTranscript = "";
+                        btn.textContent = "Start";
+                    }
+                })
+            
+            }
+            </script>
+
+    
+</body>
+
+</html>
