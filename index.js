@@ -11,7 +11,15 @@ require('dotenv/config')
 // import say from "say";
 // import cookieParser from "cookie-parser"
 const app = express();
-app.use(cors());
+
+var corsOptions = {
+    origin: '*',// For legacy browser support
+    methods: "*"
+}
+// cosrs options to allow all
+ app.use(cors(corsOptions));
+
+
 const encodedParams = new URLSearchParams();
 
 app.set("port", process.env.PORT || 5000);
