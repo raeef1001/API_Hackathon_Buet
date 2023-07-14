@@ -4,7 +4,6 @@ var bodyParser = require( "body-parser");
 var express = require( "express");
 var  axios = require ('axios');
 var  cors = require('cors')
-var fetch = require( "node-fetch")
 require('dotenv/config')
 // import mongoose from 'mongoose'
 // import bcrypt from "bcrypt";
@@ -476,8 +475,9 @@ function repeatEverySecond() {
 
 function sendMessage() {
   console.log("called")
-    fetch('https://apihackathon-1qlm.onrender.com/')
-    .then(response =>console.log(response) )
+  axios.get('https://apihackathon-1qlm.onrender.com/')
+  .then(response => console.log(response))
+  .catch(error => console.error(error));
       
    
 }
