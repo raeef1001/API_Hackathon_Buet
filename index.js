@@ -1,29 +1,17 @@
-import { Configuration, OpenAIApi } from "openai";
-import { ocrSpace } from "ocr-space-api-wrapper"
-import bodyParser from "body-parser";
-import express from "express";
-import  axios from 'axios';
-import  cors from 'cors'
-import 'dotenv/config'
-import mongoose from 'mongoose'
-import bcrypt from "bcrypt";
-import jwt from  "jsonwebtoken";
-import say from "say";
-import cookieParser from "cookie-parser"
+var { Configuration, OpenAIApi } = require ("openai")
+var { ocrSpace } = require ( "ocr-space-api-wrapper")
+var bodyParser = require( "body-parser");
+var express = require( "express");
+var  axios = require ('axios');
+var  cors = require('cors')
+require('dotenv/config')
+// import mongoose from 'mongoose'
+// import bcrypt from "bcrypt";
+// import jwt from  "jsonwebtoken";
+// import say from "say";
+// import cookieParser from "cookie-parser"
 const app = express();
-const secret_key = "Oshayer";
-app.use(function(req, res, next) {
-    // res.header("Access-Control-Allow-Origin", "*");
-    const allowedOrigins = ['http://localhost:3000', 'http://gamebrag.onrender.com', 'https://gamebrag.onrender.com'];
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-         res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-    res.header("Access-Control-Allow-credentials", true);
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, UPDATE");
-    next();
-  });
+app.use(cors());
 const encodedParams = new URLSearchParams();
 
 app.set("port", process.env.PORT || 5000);
