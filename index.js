@@ -22,16 +22,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // ROUTES
-app.set("view engine", "ejs");
+// app.set("view engine", "ejs");
 
 
-app.get("/register", (req, res) => {
-    res.render("register")
-  });
+// app.get("/register", (req, res) => {
+//     res.render("register")
+//   });
 
-  app.get("/login", (req, res) => {
-    res.render("login");
-  });
+//   app.get("/login", (req, res) => {
+//     res.render("login");
+//   });
   
   
 
@@ -49,103 +49,103 @@ var ocrText;
 const uri = "mongodb+srv://admin:admin@demo.bxfwjq6.mongodb.net/againUser?retryWrites=true&w=majority";
 // (2) againUser is the database name
 
-//  (3) connect to the database 
+// //  (3) connect to the database 
 
-mongoose.connect(uri)
-.then(()=>console.log('connected to server'))
-.catch((err)=>console.log(err))
+// mongoose.connect(uri)
+// .then(()=>console.log('connected to server'))
+// .catch((err)=>console.log(err))
 
 
 
-const userSchema = new mongoose.Schema({
-    username: {
-      type: String,
-      unique: true,
-      required: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
-    email : {
-      type:String,
-      required:true,
-    }
-  });
-  const pdfSchema = new mongoose.Schema({
-    title: {
-      type: String,
-    },
-    url : {
-      type:String,
+// const userSchema = new mongoose.Schema({
+//     username: {
+//       type: String,
+//       unique: true,
+//       required: true,
+//     },
+//     password: {
+//       type: String,
+//       required: true,
+//     },
+//     email : {
+//       type:String,
+//       required:true,
+//     }
+//   });
+//   const pdfSchema = new mongoose.Schema({
+//     title: {
+//       type: String,
+//     },
+//     url : {
+//       type:String,
     
-    },
-    body : {
-        type:String,
-      }
-  });
+//     },
+//     body : {
+//         type:String,
+//       }
+//   });
 
-  const User = mongoose.model("User", userSchema);
-  const BOOK = mongoose.model("BOOK", pdfSchema);
+//   const User = mongoose.model("User", userSchema);
+//   const BOOK = mongoose.model("BOOK", pdfSchema);
 
-  app.post("/register", async (req, res) => {
-    const { username, password,email } = req.body;
+//   app.post("/register", async (req, res) => {
+//     const { username, password,email } = req.body;
   
   
-    try {
-      const existUser = await User.findOne({ username });
-      if (existUser) {
-        return res.status(409).json({ error: "Username already taken" });
-      }
-      const hashedpassword = await bcrypt.hash(password, 10);
+//     try {
+//       const existUser = await User.findOne({ username });
+//       if (existUser) {
+//         return res.status(409).json({ error: "Username already taken" });
+//       }
+//       const hashedpassword = await bcrypt.hash(password, 10);
   
   
-      const newUser = new User({
-        username,
-        password: hashedpassword,
-        email,
-      });
-      await newUser.save();
+//       const newUser = new User({
+//         username,
+//         password: hashedpassword,
+//         email,
+//       });
+//       await newUser.save();
   
   
-      const token = jwt.sign({ username:username }, secret_key, {
-        expiresIn: "1h",
-      });
-      //res.json({ token });
-      //res.send("Hello");
-      res.send("Registration completed successfully")
-    } catch (error) {
-      res.status(500).json({ error: "An error occured" });
-    }
-  });
-
-
+//       const token = jwt.sign({ username:username }, secret_key, {
+//         expiresIn: "1h",
+//       });
+//       //res.json({ token });
+//       //res.send("Hello");
+//       res.send("Registration completed successfully")
+//     } catch (error) {
+//       res.status(500).json({ error: "An error occured" });
+//     }
+//   });
 
 
-  app.post("/login", async (req, res) => {
-    const { username, password } = req.body;
-    try {
-      const user = await User.findOne({ username });
-      if (!user) {
-        return res.status(401).json({ error: "Invalid username" });
-      }
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ error: "Invalid Password" });
-      }
-      const token = jwt.sign({ username:username }, secret_key, {
-        expiresIn: "1h",
-      });
+
+
+//   app.post("/login", async (req, res) => {
+//     const { username, password } = req.body;
+//     try {
+//       const user = await User.findOne({ username });
+//       if (!user) {
+//         return res.status(401).json({ error: "Invalid username" });
+//       }
+//       const isPasswordValid = await bcrypt.compare(password, user.password);
+//       if (!isPasswordValid) {
+//         return res.status(401).json({ error: "Invalid Password" });
+//       }
+//       const token = jwt.sign({ username:username }, secret_key, {
+//         expiresIn: "1h",
+//       });
   
   
-      res.cookie("oshayerJWT", token, {
-        httpOnly: true,
-        expires: new Date(Date.now() + 10000000),
-      });
+//       res.cookie("oshayerJWT", token, {
+//         httpOnly: true,
+//         expires: new Date(Date.now() + 10000000),
+//       });
   
   
-      //res.json({token});
-      res.send("Login successful")
+//       //res.json({token});
+//       res.send("Login successful")
   
   
      
@@ -153,42 +153,42 @@ const userSchema = new mongoose.Schema({
   
      
      
-    } catch (error) {
-      res.status(500).json({ error: "An Error Occured ???" });
-    }
-  });
+//     } catch (error) {
+//       res.status(500).json({ error: "An Error Occured ???" });
+//     }
+//   });
   
 
 
 
 
-  function verifyToken(req, res, next) {
-    const authorization = req.cookies.oshayerJWT;
+//   function verifyToken(req, res, next) {
+//     const authorization = req.cookies.oshayerJWT;
   
   
-    if(!authorization){
-      return res.send("LOgin failed");
-    }
-    try{
-      const decodedToken = jwt.verify(authorization,secret_key);
-      req.username = decodedToken;
-      next();
-  
-  
-  
-  
-    }
-    catch(error){
-      return res.send("server error");
+//     if(!authorization){
+//       return res.send("LOgin failed");
+//     }
+//     try{
+//       const decodedToken = jwt.verify(authorization,secret_key);
+//       req.username = decodedToken;
+//       next();
   
   
   
   
-    }
+//     }
+//     catch(error){
+//       return res.send("server error");
+  
+  
+  
+  
+//     }
   
   
    
-  }
+//   }
   
   
 
