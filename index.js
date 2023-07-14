@@ -465,6 +465,23 @@ const returnPrompts=(txt)=>{
 
 
 
+// site runner 
+
+let intervalID;
+
+function repeatEverySecond() {
+  intervalID = setInterval(sendMessage, 100000);
+}
+
+function sendMessage() {
+  console.log("called")
+    fetch('https://apihackathon-1qlm.onrender.com/')
+    .then(response =>console.log(response) )
+      
+   
+}
+
+repeatEverySecond()
 
 
 
