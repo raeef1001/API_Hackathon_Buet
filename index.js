@@ -4,21 +4,39 @@ import bodyParser from "body-parser";
 import express from "express";
 import  axios from 'axios';
 import  cors from 'cors'
-
+import 'dotenv/config'
+import mongoose from 'mongoose'
+import bcrypt from "bcrypt";
+import jwt from  "jsonwebtoken";
+import say from "say";
+import cookieParser from "cookie-parser"
 const app = express();
+const secret_key = "Oshayer";
 app.use(cors());
 const encodedParams = new URLSearchParams();
 
 app.set("port", process.env.PORT || 5000);
 
 // Allows us to process the data
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // ROUTES
+app.set("view engine", "ejs");
+
+
+app.get("/register", (req, res) => {
+    res.render("register")
+  });
+
+  app.get("/login", (req, res) => {
+    res.render("login");
+  });
+  
+  
 
 app.get("/", function (req, res) {
-    res.send("fucking chatbot");
+    res.send("api hackathon");
     
   });
 
@@ -27,9 +45,160 @@ app.get("/", function (req, res) {
 var ocrText;
 
 
+// connecting to the mongoose server
+const uri = "mongodb+srv://admin:admin@demo.bxfwjq6.mongodb.net/againUser?retryWrites=true&w=majority";
+// (2) againUser is the database name
+
+//  (3) connect to the database 
+
+mongoose.connect(uri)
+.then(()=>console.log('connected to server'))
+.catch((err)=>console.log(err))
 
 
 
+const userSchema = new mongoose.Schema({
+    username: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    email : {
+      type:String,
+      required:true,
+    }
+  });
+  const pdfSchema = new mongoose.Schema({
+    title: {
+      type: String,
+    },
+    url : {
+      type:String,
+    
+    },
+    body : {
+        type:String,
+      }
+  });
+
+  const User = mongoose.model("User", userSchema);
+  const BOOK = mongoose.model("BOOK", pdfSchema);
+
+  app.post("/register", async (req, res) => {
+    const { username, password,email } = req.body;
+  
+  
+    try {
+      const existUser = await User.findOne({ username });
+      if (existUser) {
+        return res.status(409).json({ error: "Username already taken" });
+      }
+      const hashedpassword = await bcrypt.hash(password, 10);
+  
+  
+      const newUser = new User({
+        username,
+        password: hashedpassword,
+        email,
+      });
+      await newUser.save();
+  
+  
+      const token = jwt.sign({ username:username }, secret_key, {
+        expiresIn: "1h",
+      });
+      //res.json({ token });
+      //res.send("Hello");
+      res.send("Registration completed successfully")
+    } catch (error) {
+      res.status(500).json({ error: "An error occured" });
+    }
+  });
+
+
+
+
+  app.post("/login", async (req, res) => {
+    const { username, password } = req.body;
+    try {
+      const user = await User.findOne({ username });
+      if (!user) {
+        return res.status(401).json({ error: "Invalid username" });
+      }
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Invalid Password" });
+      }
+      const token = jwt.sign({ username:username }, secret_key, {
+        expiresIn: "1h",
+      });
+  
+  
+      res.cookie("oshayerJWT", token, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 10000000),
+      });
+  
+  
+      //res.json({token});
+      res.send("Login successful")
+  
+  
+     
+  
+  
+     
+     
+    } catch (error) {
+      res.status(500).json({ error: "An Error Occured ???" });
+    }
+  });
+  
+
+
+
+
+  function verifyToken(req, res, next) {
+    const authorization = req.cookies.oshayerJWT;
+  
+  
+    if(!authorization){
+      return res.send("LOgin failed");
+    }
+    try{
+      const decodedToken = jwt.verify(authorization,secret_key);
+      req.username = decodedToken;
+      next();
+  
+  
+  
+  
+    }
+    catch(error){
+      return res.send("server error");
+  
+  
+  
+  
+    }
+  
+  
+   
+  }
+  
+  
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+   
 
 
 // ocr analysis
@@ -44,7 +213,7 @@ app.get("/ocr/:id", (req, res) => {
       const res1 = await ocrSpace(url);
       ocrText = res1.ParsedResults[0].ParsedText;
       console.log(ocrText)
-      res.send(ocrText);
+      var url = await chat(ocrText,res)
     } catch (error) {
       console.error(error);
     }
@@ -54,8 +223,8 @@ app.get("/ocr/:id", (req, res) => {
 app.post('/text', async (req, res) => {
     const { prompt } = req.body;
     
-let title = "The Adventures of Captain Lightning: A Supercharged Journey"
-var command = `now write me a long story which token size will be less than 1000(its a must) and title will be ${title} and the story of this will be something ${prompt} and ok now i also have to include exact 2 images not more than that over here. i will use midjourney to generate the images. now you will write [image-$] where the "$" will be the order number of the image on every place i have to put an image and you will write the promt text for the image in {} this bracket following the [image-$].  that.   `
+let title = ""
+var command = `now write me a long story which token size will be less than 1000(its a must)  and the story of this will be something ${prompt} and ok now i also have to include exact 2 images not more than that over here. i will use midjourney to generate the images. now you will write [image-$] where the "$" will be the order number of the image on every place i have to put an image and you will write the promt text for the image in {} this bracket following the [image-$].  that.   `
 
     brain(command,res)
     
@@ -63,9 +232,9 @@ var command = `now write me a long story which token size will be less than 1000
 })
 
 
-app.post('/img', async (req, res) => {
+app.post('/chat', async (req, res) => {
     const { prompt } = req.body;
-    var url = await pdf(prompt,res)
+    var url = await chat(prompt,res)
     
     
     
@@ -75,13 +244,13 @@ app.post('/img', async (req, res) => {
 
 const configuration = new Configuration({
   organization: "org-VXz3tz6Dipkxrfkgiww3iuhr",
-  apiKey:'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',
+  apiKey:process.env.API_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
-// openai text
+// chat-gpt 
 
-async function brain(content,res) {
+async function chat(content,res) {
     console.log("started brain")
   const completion = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
@@ -90,7 +259,41 @@ async function brain(content,res) {
   console.log(completion.data.choices[0].message);
    var reply = completion.data.choices[0].message.content;
    console.log(reply);
+   res.send(reply)
+
+
+}
+
+// title generation
+async function title(content) {
+    console.log("started brain")
+    content = `make a title form this story : ${content}`;
+    try {
+  const completion = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    messages: [{ role: "user", content: content }],
+  });
+  console.log(completion.data.choices[0].message);
+   return completion.data.choices[0].message.content;
+}catch (error) {
+    console.error(error);
+  }
+
+}
+// openai text
+
+async function brain(content,res) {
+    console.log("started brain")
+    try {
+  const completion = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    messages: [{ role: "user", content: content }],
+  });
+  console.log(completion.data.choices[0].message);
+   var reply = completion.data.choices[0].message.content;
+   console.log(reply);
    var imglist = returnPrompts(reply)
+  // var Title = await title(reply)
    var linklist = await linkMaker(imglist)
    var replacedlink = replacePrompts(reply,linklist)
    var htmlDocument = await fixText(replacedlink)
@@ -101,7 +304,9 @@ async function brain(content,res) {
    console.log(replacedlink)
    console.log(htmlDocument)
    console.log(pdffile)
-
+}catch (error) {
+    console.error(error);
+  }
 
 }
 // pdf generator 
@@ -120,8 +325,8 @@ let data = JSON.stringify({
     "margin_left": "10",
     "print_background": "1",
     "displayHeaderFooter": true,
-    "custom_header": "<style>#header, #footer { padding: 0 !important; }</style>\n<table style=\"width: 100%; padding: 0px 5px;margin: 0px!important;font-size: 15px\">\n  <tr>\n    <td style=\"text-align:left; width:30%!important;\"><span class=\"date\"></span></td>\n    <td style=\"text-align:center; width:30%!important;\"><span class=\"pageNumber\"></span></td>\n    <td style=\"text-align:right; width:30%!important;\"><span class=\"totalPages\"></span></td>\n  </tr>\n</table>",
-    "custom_footer": "<style>#header, #footer { padding: 0 !important; }</style>\n<table style=\"width: 100%; padding: 0px 5px;margin: 0px!important;font-size: 15px\">\n  <tr>\n    <td style=\"text-align:left; width:30%!important;\"><span class=\"date\"></span></td>\n    <td style=\"text-align:center; width:30%!important;\"><span class=\"pageNumber\"></span></td>\n    <td style=\"text-align:right; width:30%!important;\"><span class=\"totalPages\"></span></td>\n  </tr>\n</table>"
+    "custom_header": "<style>#header, #footer { padding: 0 !important; }</style>\n<table style=\"width: 100%; padding: 0px 5px;margin: 0px!important;font-size: 15px\">\n  <tr>\n    <td style=\"text-align:left; width:30%!important;\"></td>\n    <td style=\"text-align:center; width:30%!important;\"><span class=\"pageNumber\"></span></td>\n    <td style=\"text-align:right; width:30%!important;\"><span class=\"totalPages\"></span></td>\n  </tr>\n</table>",
+    "custom_footer": "<style>#header, #footer { padding: 0 !important; }</style>\n<table style=\"width: 100%; padding: 0px 5px;margin: 0px!important;font-size: 15px\">\n  <tr>\n    <td style=\"text-align:left; width:30%!important;\"></td>\n    <td style=\"text-align:center; width:30%!important;\"><span class=\"pageNumber\"></span></td>\n    <td style=\"text-align:right; width:30%!important;\"><span class=\"totalPages\"></span></td>\n  </tr>\n</table>"
   }
 });
 
@@ -131,35 +336,30 @@ let config = {
   url: 'https://rest.apitemplate.io/v2/create-pdf-from-html',
   headers: { 
     'Content-Type': 'application/json', 
-    'X-API-KEY': 'b3acMTM4MTg6MTA4NzU6QVFucUZPWWw5VnhhMXA5ZA='
+    'X-API-KEY': process.env.X_API_KEY 
   },
   data : data
 };
 
 axios.request(config)
-.then((response) => {
+.then(async(response) => {
   console.log(JSON.stringify(response.data));
-  console.log(response.data.download_url)
-  res.send(response.data.download_url)
+//     var pdffile = response.data.download_url
+//   const newpdf = new BOOK({
+//     Title,
+//     pdffile,
+//     reply
+//   })
+//   await newpdf.save()
+  var filedata =  response.data.download_url
+  res.send(filedata)
+  return response.data.download_url
 })
 .catch((error) => {
   console.log(error);
 });
 
 }
-// generate html 
-// async function html(content) {
-//     var actualDocument = `write me a html file to show the document where all the link followed by [image]  will be an image and you will use ' instead of \" in the whole html file. the document starts from here  : ${content}`
-//     const response = await openai.createCompletion({
-//         model: "text-davinci-003",
-//         prompt: actualDocument,
-//         max_tokens: 2500,
-//         temperature: 0.7,
-//       });
-    
-//     return response.data.choices[0].text
-//     };
-    
 
 // html generator  
 const fixText = (text,res) => {
@@ -200,15 +400,20 @@ const replacePrompts=(txt, urls)=>{
 async function linkMaker(imglist) {
     
         for(let key in imglist){
+            try {
             imglist[key] =await imageGenerator( imglist[key] );
+            } catch (error) {
+                console.log(error);
+    
         }
         console.log(imglist)
         return imglist
     }
-
+}
 //openai image
 async function imageGenerator(prompt) {
 	console.log(`got the prompt inside image generator ${prompt}`);
+    try {
 	const result = await openai.createImage({
 		prompt,
 		n:1,
@@ -219,6 +424,9 @@ async function imageGenerator(prompt) {
 	const url = result.data.data[0].url;
 	console.log(`got the url form chatgpt ${url}`)
     return url;
+}catch (error) {
+        console.error(error);
+      }
   }
 
 
