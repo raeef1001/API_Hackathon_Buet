@@ -12,13 +12,24 @@ import say from "say";
 import cookieParser from "cookie-parser"
 const app = express();
 const secret_key = "Oshayer";
-app.use(cors());
+app.use(function(req, res, next) {
+    // res.header("Access-Control-Allow-Origin", "*");
+    const allowedOrigins = ['http://localhost:3000', 'http://gamebrag.onrender.com', 'https://gamebrag.onrender.com'];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+         res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-credentials", true);
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, UPDATE");
+    next();
+  });
 const encodedParams = new URLSearchParams();
 
 app.set("port", process.env.PORT || 5000);
 
 // Allows us to process the data
-app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // ROUTES
