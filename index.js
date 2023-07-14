@@ -4,6 +4,7 @@ var bodyParser = require( "body-parser");
 var express = require( "express");
 var  axios = require ('axios');
 var  cors = require('cors')
+var fetch = require( "node-fetch")
 require('dotenv/config')
 // import mongoose from 'mongoose'
 // import bcrypt from "bcrypt";
@@ -220,7 +221,7 @@ app.get("/ocr/:id", (req, res) => {
       const res1 = await ocrSpace(url);
       ocrText = res1.ParsedResults[0].ParsedText;
       console.log(ocrText)
-      var url = await chat(ocrText,res)
+      var url = await brain(ocrText,res)
     } catch (error) {
       console.error(error);
     }
